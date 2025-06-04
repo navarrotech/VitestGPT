@@ -1,0 +1,45 @@
+{
+  "name": "vitestgpt",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "dev": "vitest watch --reporter=verbose",
+    "test": "vitest run --reporter=verbose",
+    "lint": "eslint . --ext ts,tsx --max-warnings 0"
+  },
+  "devDependencies": {
+    "@stylistic/eslint-plugin-js": "^3.1.0",
+    "@types/moment": "^2.13.0",
+    "@types/node": "^22.15.29",
+    "@typescript-eslint/eslint-plugin": "^8.18.0",
+    "@typescript-eslint/parser": "^8.18.0",
+    "axios": "^1.9.0",
+    "eslint": "^8.57.0",
+    "eslint-config-airbnb": "^19.0.4",
+    "eslint-config-google": "^0.14.0",
+    "eslint-import-resolver-typescript": "^3.7.0",
+    "eslint-plugin-header": "^3.1.1",
+    "eslint-plugin-i18next": "^6.1.1",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-react": "^7.37.2",
+    "eslint-plugin-react-hooks": "^5.1.0",
+    "eslint-plugin-react-refresh": "^0.4.16",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.15.0"
+  },
+  "dependencies": {
+    "commander": "^14.0.0",
+    "dotenv": "^16.5.0",
+    "openai": "^5.1.0",
+    "reserved-words": "^0.1.2",
+    "ts-morph": "^26.0.0",
+    "uuid": "^11.1.0",
+    "vitest": "^3.2.1",
+    "winston": "^3.17.0",
+    "winston-daily-rotate-file": "^5.0.0",
+    "yup": "^1.6.1"
+  }
+}
