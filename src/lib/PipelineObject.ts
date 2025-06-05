@@ -44,6 +44,13 @@ export class PipelineObject {
   // GPT generated content
   public testplan: string
   public vitestFileContents: string
+  public messageToUser: string
+
+  // Results
+  public compileResults: {
+    result: string
+    exitCode: number
+  }[] = []
 
   constructor(
     targetInputFile: string,
@@ -67,7 +74,7 @@ export class PipelineObject {
       content: prompt
     })
 
-    this.log('...waiting for response...')
+    this.log('Waiting for a response from llm...')
     const response = await PipelineObject.completions({
       model,
       messages: useHistory

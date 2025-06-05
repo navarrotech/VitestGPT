@@ -3,3 +3,4 @@
 import type { ChatModel } from 'openai/resources'
 
 export const LLM_MODEL: ChatModel = 'gpt-4.1-nano'
+export const RECURSIVE_ATTEMPT_LIMIT: number = 6

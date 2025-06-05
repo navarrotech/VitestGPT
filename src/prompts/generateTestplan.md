@@ -62,6 +62,6 @@ describe('something', () => {
 Below the user's package.json, you can optionally specify utility packages in your testplan that you would like to use to help your unit tests.
 If you do pick npm packages to use, be clear which ones and note which versions they are.
 ```json
-{{ it.packageJson }}
+{{ it.packageJson | safe }}
 ```
 {{/if}}

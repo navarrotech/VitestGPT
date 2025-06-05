@@ -142,3 +142,33 @@ export function makeRelativeImportPath(pathToImport: string, sourcePath: string)
 
   return relativePath
 }
+
+// Asynchronously watch a file until the callback returns true
+export async function watchFileUntil(
+  filePath: string,
+  callback: (fileContent: string) => boolean
+): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    // Create a watcher on the specified file path
+    const watcher: fs.FSWatcher = fs.watch(filePath, (eventType, filename) => {
+      try {
+        // Invoke the callback; if it returns true, close watcher and resolve
+        if (callback(fs.readFileSync(filePath, 'utf-8'))) {
+          watcher.close()
+          resolve()
+        }
+      }
+      catch (error) {
+        // On callback error, close watcher and reject the promise
+        watcher.close()
+        reject(error)
+      }
+    })
+
+    // Handle watcher errors by closing and rejecting
+    watcher.on('error', (error) => {
+      watcher.close()
+      reject(error)
+    })
+  })
+}

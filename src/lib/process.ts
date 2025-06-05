@@ -16,15 +16,17 @@ export async function runCommand(
   command: string,
   args: string[] = [],
   options: SpawnOptions = {}
-): Promise<[string, number]> {
-  return new Promise<[string, number]>((resolve) => {
+): Promise<[string, number, string]> {
+  return new Promise<[string, number, string]>((resolve) => {
     options.stdio = [ 'ignore', 'pipe', 'pipe' ]
     options.shell = true
+
+    const fullCommand = `${command} ${args.join(' ')}`
 
     let output: string = ''
     let child: ReturnType<typeof spawn> | null = null
 
-    logger.debug(`  >> Running child process command: '${command} ${args.join(' ')}'`)
+    logger.debug(`  >> Running child process command: '${fullCommand}'`)
 
     // Try to spawn the process; if spawning throws, catch and return exit code 1
     try {
@@ -40,7 +42,7 @@ export async function runCommand(
       }
       // Resolve immediately with exit code 1
       output = stripAnsiColors(output)
-      resolve([ output, 1 ])
+      resolve([ output, 1, fullCommand ])
       return
     }
 
@@ -64,13 +66,13 @@ export async function runCommand(
       output += err.message
       output = stripAnsiColors(output)
       // Resolve with exit code 1
-      resolve([ output, 1 ])
+      resolve([ output, 1, fullCommand ])
     })
 
     // When the process exits (regardless of exit code), resolve with collected output
     child.on('close', () => {
       output = stripAnsiColors(output)
-      resolve([ output, child.exitCode ?? 0 ])
+      resolve([ output, child.exitCode ?? 0, fullCommand ])
     })
   })
 }

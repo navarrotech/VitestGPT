@@ -48,6 +48,13 @@ async function runRealTest() {
     JSON.stringify(result, null, 2)
   )
 
+  // Copy the logs/app.log into the tmpDir
+  const logFilePath = path.join('logs', 'app.log')
+  if (fs.existsSync(logFilePath)) {
+    const logContent = fs.readFileSync(logFilePath, 'utf-8')
+    fs.writeFileSync(path.join(tmpDir, 'app.log'), logContent)
+  }
+
   console.log(`Final results written to:\n${OUTPUT_FINAL_RESULT}`)
   console.log(`REALTEST FINISHED - You can access the ephemeral directory created at:\n${tmpDir}`)
 }

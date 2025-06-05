@@ -16,17 +16,18 @@ export function safeStringifyJson<Type = Record<string, any>>(
   space?: string | number
 ): string {
   try {
-    const newJson = JSON.stringify(obj, replacer, space)
-
-    // Replace &quot; with " to ensure proper JSON format
-    if (typeof newJson === 'string') {
-      return newJson.replace(/&quot;/g, '"')
-    }
-
-    return newJson
+    return JSON.stringify(obj, replacer, space)
   }
   catch (error) {
     console.error('Failed to stringify JSON:', error)
     return '{}'
   }
+}
+
+export function decodeHtmlEntities(str: string): string {
+  return str
+    .replace(/&quot;/g, '"')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
 }

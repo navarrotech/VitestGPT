@@ -4,7 +4,7 @@ import { PipelineStage } from './PipelineStage'
 import type { PipelineObject } from '../lib/PipelineObject'
 
 // Utility
-import { removeBackticks } from '../lib/llm'
+import { removeBackticks } from '../lib/prompts'
 import { touch } from '../lib/file'
 import { getPrompt } from '../lib/prompts'
 
