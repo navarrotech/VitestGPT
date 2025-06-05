@@ -16,7 +16,14 @@ export function safeStringifyJson<Type = Record<string, any>>(
   space?: string | number
 ): string {
   try {
-    return JSON.stringify(obj, replacer, space)
+    const newJson = JSON.stringify(obj, replacer, space)
+
+    // Replace &quot; with " to ensure proper JSON format
+    if (typeof newJson === 'string') {
+      return newJson.replace(/&quot;/g, '"')
+    }
+
+    return newJson
   }
   catch (error) {
     console.error('Failed to stringify JSON:', error)

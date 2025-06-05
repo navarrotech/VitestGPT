@@ -27,7 +27,7 @@ export function forEachFileInDirectory(
   const normalizedPath = path.resolve(dirPath)
 
   if (!fs.existsSync(normalizedPath)) {
-    throw new Error(`Directory not found: ${normalizedPath}`)
+    return
   }
 
   const files = fs.readdirSync(normalizedPath)
@@ -111,7 +111,7 @@ export function makeRelativeImportPath(pathToImport: string, sourcePath: string)
   function stripDrive(p: string): string {
     // path.parse(p).root === "E:\" on Windows when p = "E:\Whatever\…"
     const parsed = path.parse(p)
-    if (/^[A-Za-z]:[\\\/]$/.test(parsed.root)) {
+    if (/^[A-Za-z]:[\\/]$/.test(parsed.root)) {
       // Remove the leading "E:\" (i.e. parsed.root.length characters)
       return p.slice(parsed.root.length)
     }

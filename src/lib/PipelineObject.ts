@@ -96,6 +96,6 @@ export class PipelineObject {
   }
 
   public log(...args: any[]): void {
-    logger.info(args)
+    logger.info(...args)
   }
 }

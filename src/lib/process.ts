@@ -1,7 +1,7 @@
 // Copyright © 2025 Navarrotech
 
 // Core
-import { spawn, SpawnOptions } from 'child_process'
+import { spawn, type SpawnOptions } from 'child_process'
 
 /**
  * Spawns a child process asynchronously and returns its combined stdout and stderr output.
@@ -17,11 +17,32 @@ export async function runCommand(
   args: string[] = [],
   options: SpawnOptions = {}
 ): Promise<[string, number]> {
-  return new Promise<[string, number]>((resolve, reject) => {
-    // Start the child process
-    const child = spawn(command, args, options)
+  return new Promise<[string, number]>((resolve) => {
+    options.stdio = [ 'ignore', 'pipe', 'pipe' ]
+    options.shell = true
 
-    let output = ''
+    let output: string = ''
+    let child: ReturnType<typeof spawn> | null = null
+
+    logger.debug(`  >> Running child process command: '${command} ${args.join(' ')}'`)
+
+    // Try to spawn the process; if spawning throws, catch and return exit code 1
+    try {
+      child = spawn(command, args, options)
+    }
+    catch (spawnErr) {
+      // Append the spawn error message to output
+      if (spawnErr instanceof Error) {
+        output += spawnErr.message
+      }
+      else {
+        output += String(spawnErr)
+      }
+      // Resolve immediately with exit code 1
+      output = stripAnsiColors(output)
+      resolve([ output, 1 ])
+      return
+    }
 
     // Collect stdout data
     if (child.stdout) {
@@ -37,14 +58,31 @@ export async function runCommand(
       })
     }
 
-    // Handle errors from spawning
+    // Handle runtime errors (e.g., executable not found after spawn)
     child.on('error', (err) => {
-      reject(err)
+      // Append the error message to output
+      output += err.message
+      output = stripAnsiColors(output)
+      // Resolve with exit code 1
+      resolve([ output, 1 ])
     })
 
-    // Resolve when the process exits (regardless of exit code)
+    // When the process exits (regardless of exit code), resolve with collected output
     child.on('close', () => {
+      output = stripAnsiColors(output)
       resolve([ output, child.exitCode ?? 0 ])
     })
   })
+}
+
+export function stripAnsiColors(input: string): string {
+  // Regular expression to match ANSI escape sequences for colors
+
+  /* eslint-disable no-control-regex */
+  const ansiRegex = /\x1B\[[0-9;]*m/g
+
+  // Replace all matches with empty string
+  const result = input.replace(ansiRegex, '')
+
+  return result
 }

@@ -4,6 +4,7 @@ import { PipelineStage } from './PipelineStage'
 import type { PipelineObject } from '../lib/PipelineObject'
 
 import { getPrompt } from '../lib/prompts'
+import { safeStringifyJson } from '../common/json'
 
 export class TestplanStage extends PipelineStage {
   constructor() {
@@ -15,7 +16,7 @@ export class TestplanStage extends PipelineStage {
     const generateTestplanPrompt = getPrompt('generateTestplan', {
       inputFunction: input.isolatedFunctionContents,
       language: input.lang,
-      packageJson: input.packageJsonContents
+      packageJson: safeStringifyJson(input.packageJsonContents)
     })
     const testplan = await input.sendHumanPrompt(generateTestplanPrompt)
     input.testplan = testplan

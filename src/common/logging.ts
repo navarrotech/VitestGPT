@@ -1,62 +1,104 @@
 // Copyright © 2025 Navarrotech
 
-// Core
-import { createLogger, format, transports } from 'winston'
-import DailyRotateFile from 'winston-daily-rotate-file'
+import { forEachFileInDirectory, touch } from '../lib/file'
 
-// Typescript
-import type { Logger } from 'winston'
+import fs from 'fs'
+import path from 'path'
 
-// Create a logger that:
-// 1. Combines an “errors” formatter (so Error.stack is preserved) with JSON and timestamp
-// 2. Writes errors → logs/error.log, info+ → logs/app.log
-// 3. Prints colorized, stack-preserving output to the console
-export const logger: Logger = createLogger({
-  level: 'info',
-  format: format.combine(
-    format.errors({ stack: true }),
-    format.timestamp(),
-    format.json()
-  ),
-  transports: [
-    // Rotate error logs daily, keep 14 days, compress old files
-    new DailyRotateFile({
-      filename: 'logs/error-%DATE%.log',
-      datePattern: 'YYYY-MM-DD',
-      level: 'error',
-      zippedArchive: true,
-      maxSize: '20m',
-      maxFiles: '14d'
-    }),
-    // Rotate all info+ logs daily
-    new DailyRotateFile({
-      filename: 'logs/app-%DATE%.log',
-      datePattern: 'YYYY-MM-DD',
-      level: 'info',
-      zippedArchive: true,
-      maxSize: '20m',
-      maxFiles: '14d'
-    }),
-    // Also log to the console with stack traces and colorized output
-    new transports.Console({
-      format: format.combine(
-        format.errors({ stack: true }),
-        format.colorize(),
-        format.simple()
-      )
-    })
-  ],
-  rejectionHandlers: [
-    new DailyRotateFile({
-      filename: 'logs/error-%DATE%.log',
-      datePattern: 'YYYY-MM-DD',
-      level: 'error',
-      zippedArchive: true,
-      maxSize: '20m',
-      maxFiles: '14d'
-    })
-  ]
-})
+const logsDir = path.join(process.cwd(), 'logs')
+const ephemeralLogsDir = path.join(logsDir, 'ephemeral')
 
-// @ts-ignore
+const mainLogs = path.join(logsDir, 'app.log')
+
+forEachFileInDirectory(ephemeralLogsDir, (filePath) => {
+  // If the file has existed for more than 7 days, delete it
+  try {
+    const stats = fs.statSync(filePath)
+    const now = new Date()
+    const fileAgeInDays = (now.getTime() - stats.mtime.getTime()) / (1000 * 60 * 60 * 24)
+
+    if (fileAgeInDays > 7) {
+      fs.unlinkSync(filePath)
+    }
+  }
+  catch (error) {
+    console.error(`Error processing file ${filePath}:`, error)
+  }
+}, true)
+
+// Purge all main logs before continuing
+if (fs.existsSync(mainLogs)) {
+  fs.unlinkSync(mainLogs)
+}
+touch(mainLogs, '')
+
+export type Logger = {
+  info: (...args: any[]) => void
+  warn: (...args: any[]) => void
+  error: (...args: any[]) => void
+  debug: (...args: any[]) => void
+  log: (...args: any[]) => void
+  to: (target: string, ...args: any[]) => void
+}
+
+
+function persistTo(outputPath: string, ...args: any[]): void {
+  outputPath = path.resolve(outputPath)
+
+  // Ensure the directory exists
+  const dir = path.dirname((outputPath))
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true })
+  }
+
+  // Reformat the messages
+  const messages = args.map(reformatMessage).join(' ')
+
+  // Append the messages to the file
+  if (!fs.existsSync(outputPath)) {
+    // Create the file if it doesn't exist
+    fs.writeFileSync(outputPath, '', 'utf8')
+  }
+
+  fs.appendFileSync(outputPath, messages + '\n', 'utf8')
+}
+
+function reformatMessage(input: any): string {
+  if (typeof input === 'object') {
+    return JSON.stringify(input, null, 2)
+  }
+  if (input instanceof Error) {
+    return `${input.name}: ${input.message}\n${input.stack}`
+  }
+
+  return String(input)
+}
+
+const logger: Logger = {
+  log: (...args: any[]) => {
+    persistTo(mainLogs, ...args)
+    console.log(...args)
+  },
+  info: (...args: any[]) => {
+    persistTo(mainLogs, ...args)
+    console.info(...args)
+  },
+  warn: (...args: any[]) => {
+    persistTo(mainLogs, ...args)
+    console.warn(...args)
+  },
+  error: (...args: any[]) => {
+    persistTo(mainLogs, ...args)
+    console.error(...args)
+  },
+  debug: (...args: any[]) => {
+    persistTo(mainLogs, ...args)
+    console.debug(...args)
+  },
+  to: (target: string, ...args: any[]) => {
+    const outputPath = path.join(ephemeralLogsDir, target)
+    persistTo(outputPath, ...args)
+  }
+}
+
 globalThis.logger = logger

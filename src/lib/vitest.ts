@@ -30,18 +30,10 @@ export async function getBestVitestPath(): Promise<[string, string[]]> {
 
   // On Unix/macOS, local binaries live under node_modules/.bin/vitest
   // On Windows, it’ll actually be vitest.cmd
-  let vitestBin = path.resolve(
+  const vitestBin = path.resolve(
     __dirname,
     '../node_modules/.bin/vitest'
   )
-
-  // On Windows, try .cmd extension as well
-  if (process.platform === 'win32') {
-    vitestBin = path.resolve(
-      __dirname,
-      '../node_modules/.bin/vitest.cmd'
-    )
-  }
 
   const [ , binExit ] = await runCommand(vitestBin, [ '--version' ])
   if (binExit === 0) {
@@ -62,6 +54,7 @@ export async function getBestVitestPath(): Promise<[string, string[]]> {
 }
 
 const bestVitestPath = getBestVitestPath()
+getBestVitestPath().then(console.log)
 
 export async function runVitest(vitestFilePath: string, testNamePattern?: string) {
   // npx vitest -t "adds two numbers"

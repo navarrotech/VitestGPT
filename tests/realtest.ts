@@ -8,26 +8,29 @@ import { main } from '../src/entry'
 // Node
 import fs from 'fs'
 import path from 'path'
-import os from 'os'
 
 // Misc
 import { v7 as uuid } from 'uuid'
 import { ensureFileExists } from '../src/lib/file'
 
-const OUTPUT_FINAL_RESULT = path.join(process.cwd(), 'logs', 'realtest_results.json')
-const COMMON_SAMPLE_PATH = ensureFileExists('tests/samples/common.ts', 'Common sample file not found')
+const tmpDir = path.join('realtests/realtest-' + uuid())
+fs.mkdirSync(tmpDir, { recursive: true })
+
+const OUTPUT_FINAL_RESULT = path.join(tmpDir, 'realtest_results.json')
+const SAMPLES_DIR = 'tests/samples'
+const COMMON_SAMPLE_PATH = ensureFileExists(path.join(SAMPLES_DIR, 'common.ts'), 'Common sample file not found')
+
+// Copy all files from tests/samples to tmpDir
+fs.readdirSync(SAMPLES_DIR).forEach((file) => {
+  const srcPath = path.join(SAMPLES_DIR, file)
+  const destPath = path.join(tmpDir, file)
+  if (fs.statSync(srcPath).isFile()) {
+    fs.writeFileSync(destPath, fs.readFileSync(srcPath, 'utf-8'))
+  }
+})
 
 async function runRealTest() {
-  const tmpDir = fs.mkdtempSync(
-    path.join(os.tmpdir(), 'realtest-' + uuid())
-  )
-  console.log(`Temporary directory created: ${tmpDir}`)
-
-  const tmpCommonPath = path.join(tmpDir, 'common.ts')
-  fs.writeFileSync(
-    tmpCommonPath,
-    fs.readFileSync(COMMON_SAMPLE_PATH, 'utf-8')
-  )
+  console.log(`Ephemeral directory created: ${tmpDir}`)
 
   const tmpOutputPath = path.join(
     tmpDir,
@@ -45,7 +48,8 @@ async function runRealTest() {
     JSON.stringify(result, null, 2)
   )
 
-  console.log(`REALTEST FINISHED - You can access the temporary directory created at:\n${tmpDir}`)
+  console.log(`Final results written to:\n${OUTPUT_FINAL_RESULT}`)
+  console.log(`REALTEST FINISHED - You can access the ephemeral directory created at:\n${tmpDir}`)
 }
 
 runRealTest().catch(console.error)
