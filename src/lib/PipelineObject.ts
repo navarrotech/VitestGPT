@@ -1,19 +1,48 @@
 // Copyright © 2025 Navarrotech
 
+// Core
 import { v7 as uuid } from 'uuid'
+import { openai } from './llm'
+import { getPrompt } from './prompts'
+
+// Typescript
+import type { ChatCompletionMessageParam, ChatModel } from 'openai/resources'
+
+// Misc
+import { LLM_MODEL } from '../constants'
+
+const systemPrompt = getPrompt('systemPrompt')
 
 export class PipelineObject {
   public id: string = uuid()
   public continue: boolean = true
 
+  // Targets
   public targetInputFile: string
   public targetInputFunction: string
   public targetOutputFile: string
+  public packageJsonFile: string
 
+  // File contents
+  public packageJsonContents: string
   public targetRawInputFileContents: string
   public isolatedFunctionContents: string
+  public lang: 'typescript' | 'javascript'
+  public usesDefaultExport: boolean = false
 
+  // LLM Client
+  public conversationHistory: ChatCompletionMessageParam[] = [
+    {
+      role: 'system',
+      content: systemPrompt
+    }
+  ]
+
+  public static completions = openai.chat.completions.create.bind(openai.chat.completions)
+
+  // GPT generated content
   public testplan: string
+  public vitestFileContents: string
 
   constructor(
     targetInputFile: string,
@@ -26,9 +55,46 @@ export class PipelineObject {
     this.targetInputFunction = targetFunctionName
   }
 
+  public async sendHumanPrompt(
+    prompt: string,
+    model: ChatModel = LLM_MODEL,
+    useHistory: boolean = true
+  ): Promise<string> {
+    this.log('Sending human prompt:', prompt)
+    this.conversationHistory.push({
+      role: 'user',
+      content: prompt
+    })
+
+    this.log('...waiting for response...')
+    const response = await PipelineObject.completions({
+      model,
+      messages: useHistory
+        ? this.conversationHistory
+        : [
+          {
+            role: 'system',
+            content: systemPrompt
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ]
+    })
+
+    const content = response.choices[0].message.content
+
+    this.log('LLM Response:', content)
+    this.conversationHistory.push({
+      role: 'assistant',
+      content
+    })
+
+    return content
+  }
+
   public log(...args: any[]): void {
-    // TODO: Type this better
-    // @ts-ignore
-    logger.log(...args)
+    logger.info(args)
   }
 }

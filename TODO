@@ -1,0 +1,3 @@
+- React.js support
+- Require module support
+- Instead of creating a vitest from scratch, instead modify + upgrade it

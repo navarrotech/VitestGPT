@@ -21,6 +21,11 @@ type ReshapedResponse<Shape> = {
   totalPages?: number
 }
 
+/**
+ * Deeply clones an object or array, handling Dates, Arrays, and nested objects.
+ * @param {obj} obj The object or array to clone
+ * @return {obj} A deep clone of the input object or array
+ */
 export function deepClone<T>(obj: T): T {
   // If obj is null or not an object, return it directly
   if (obj === null || typeof obj !== 'object') {

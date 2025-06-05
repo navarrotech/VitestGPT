@@ -1,5 +1,7 @@
 // Copyright © 2025 Navarrotech
 
+import './common/logging'
+
 import { executePipeline } from './pipeline'
 import { PipelineObject } from './lib/PipelineObject'
 

@@ -1,69 +1,47 @@
 // Copyright © 2025 Navarrotech
 
 // Core
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 
 // Typescript
 import type { PipelineStage } from '../src/pipeline/PipelineStage'
-
-// Node
-import os from 'os'
-import fs from 'fs'
+import type { CompletionsContext } from './vitest.setup'
 
 // Lib to test
 import {
   AnalysisStage,
-  getFunctionContents,
-  getFunctionGlobals,
-  getAllImports,
-  extractArgNames,
-  stripComments,
-  getAllGlobalVariables,
-  analyzeFile
+  extractFunction
 } from '../src/pipeline/1_analysis'
 
 // Lib
 import { PipelineObject } from '../src/lib/PipelineObject'
-import { ensureFileExists } from '../src/lib/file'
 import { mockConsole } from './common/mockConsole'
-import { v7 as uuid } from 'uuid'
-
-const COMMON_SAMPLE_PATH = ensureFileExists('tests/samples/common.ts', 'Common sample file not found')
-const commonFileContents = fs.readFileSync(COMMON_SAMPLE_PATH, 'utf-8')
 
 type Context = {
   object: PipelineObject
   stage: PipelineStage
-  outputFilePath: string
-}
+} & CompletionsContext
 
-describe('Analysis Stage', () => {
-  beforeEach<Context>((ctx) => {
-    ctx.outputFilePath = `${os.tmpdir()}/${uuid()}.test.ts`
-    ctx.stage = new AnalysisStage()
-    ctx.object = new PipelineObject(COMMON_SAMPLE_PATH, 'deepClone', ctx.outputFilePath)
+describe<Context>('Analysis Stage', () => {
+  beforeEach<Context>((context) => {
+    context.stage = new AnalysisStage()
+    context.object = new PipelineObject(context.commonSamplePath, 'deepClone', context.outputFilePath)
     globalThis.logger = mockConsole()
   })
 
-  afterEach<Context>((ctx) => {
-    if (fs.existsSync(ctx.outputFilePath)) {
-      fs.unlinkSync(ctx.outputFilePath)
-    }
-  })
-
-  it<Context>('unit tests should be setup properly', (ctx) => {
-    expect(COMMON_SAMPLE_PATH).toBeDefined()
-    expect(ctx.outputFilePath).toBeDefined()
-    expect(ctx.object).toBeDefined()
-    expect(ctx.stage).toBeDefined()
-    expect(ctx.object.targetInputFile).toBe(COMMON_SAMPLE_PATH)
-    expect(ctx.object.targetOutputFile).toBe(ctx.outputFilePath)
+  it<Context>('unit tests should be setup properly', (context) => {
+    expect(context.commonSamplePath).toBeDefined()
+    expect(context.outputFilePath).toBeDefined()
+    expect(context.object).toBeDefined()
+    expect(context.stage).toBeDefined()
+    expect(context.object.targetInputFile).toBe(context.commonSamplePath)
+    expect(context.object.targetOutputFile).toBe(context.outputFilePath)
   })
 
   it<Context>('run setup stage', async (context) => {
     // Before the test, ensure the stage hasn't done anything yet
     context.object.isolatedFunctionContents = ''
-    context.object.targetRawInputFileContents = commonFileContents
+    context.object.targetRawInputFileContents = context.commonFileContents
 
     // Run the setup stage
     const result = await context.stage.run(context.object)
@@ -75,10 +53,20 @@ describe('Analysis Stage', () => {
   })
 })
 
-describe('getFunctionContents', () => {
-  it('deepClone', () => {
-    const result = getFunctionContents(commonFileContents, 'deepClone')
-    expect(result).toBe(`
+describe<Context>('extractFunction', () => {
+  it<Context>('deepClone', (context) => {
+    const functionName = 'deepClone'
+    const extracted = extractFunction(context.commonFileContents, functionName)
+
+    expect(extracted).toBeDefined()
+    expect(extracted).toContain(functionName)
+    expect(extracted).toBe(`
+/**
+ * Deeply clones an object or array, handling Dates, Arrays, and nested objects.
+ * @param {obj} obj The object or array to clone
+ * @return {obj} A deep clone of the input object or array
+ */
+
 export function deepClone<T>(obj: T): T {
   // If obj is null or not an object, return it directly
   if (obj === null || typeof obj !== 'object') {
@@ -112,9 +100,13 @@ export function deepClone<T>(obj: T): T {
 }`.trim())
   })
 
-  it('debounce', () => {
-    const result = getFunctionContents(commonFileContents, 'debounce')
-    expect(result).toBe(`
+  it<Context>('debounce', (context) => {
+    const functionName = 'debounce'
+    const extracted = extractFunction(context.commonFileContents, functionName)
+
+    expect(extracted).toBeDefined()
+    expect(extracted).toContain(functionName)
+    expect(extracted).toBe(`
 export function debounce<T extends(...args: any[]) => any>(func: T, wait: number): (...args: Parameters<T>) => void {
   let timeout: ReturnType<typeof setTimeout>
   return (...args: Parameters<T>) => {
@@ -131,9 +123,15 @@ export function debounce<T extends(...args: any[]) => any>(func: T, wait: number
 }`.trim())
   })
 
-  it('formatDate', () => {
-    const result = getFunctionContents(commonFileContents, 'formatDate')
-    expect(result).toBe(`
+  it<Context>('formatDate', (context) => {
+    const functionName = 'formatDate'
+    const extracted = extractFunction(context.commonFileContents, functionName)
+
+    expect(extracted).toBeDefined()
+    expect(extracted).toContain(functionName)
+    expect(extracted).toBe(`
+const DEFAULT_DATE_FORMAT = 'yyyy-MM-dd HH:mm:ss'
+
 export function formatDate(date: Date, format: string = DEFAULT_DATE_FORMAT): string {
   // Extract date parts
   const year = date.getFullYear().toString()
@@ -155,9 +153,13 @@ export function formatDate(date: Date, format: string = DEFAULT_DATE_FORMAT): st
 }`.trim())
   })
 
-  it('clamp', () => {
-    const result = getFunctionContents(commonFileContents, 'clamp')
-    expect(result).toBe(`
+  it<Context>('clamp', (context) => {
+    const functionName = 'clamp'
+    const extracted = extractFunction(context.commonFileContents, functionName)
+
+    expect(extracted).toBeDefined()
+    expect(extracted).toContain(functionName)
+    expect(extracted).toBe(`
 export default function clamp(value: number, min: number, max: number): number {
   // Ensure value is not less than min and not greater than max
   if (value < min) {
@@ -170,9 +172,13 @@ export default function clamp(value: number, min: number, max: number): number {
 }`.trim())
   })
 
-  it('retryAsync', () => {
-    const result = getFunctionContents(commonFileContents, 'retryAsync')
-    expect(result).toBe(`
+  it<Context>('retryAsync', (context) => {
+    const functionName = 'retryAsync'
+    const extracted = extractFunction(context.commonFileContents, functionName)
+
+    expect(extracted).toBeDefined()
+    expect(extracted).toContain(functionName)
+    expect(extracted).toBe(`
 export async function retryAsync<T>(
   // Function to retry, should return a Promise
   fn: () => Promise<T>,
@@ -199,9 +205,13 @@ export async function retryAsync<T>(
 }`.trim())
   })
 
-  it('isShallowEqual', () => {
-    const result = getFunctionContents(commonFileContents, 'isShallowEqual')
-    expect(result).toBe(`
+  it<Context>('isShallowEqual', (context) => {
+    const functionName = 'isShallowEqual'
+    const extracted = extractFunction(context.commonFileContents, functionName)
+
+    expect(extracted).toBeDefined()
+    expect(extracted).toContain(functionName)
+    expect(extracted).toBe(`
 export function isShallowEqual(objA: any, objB: any): boolean {
   // If both are strictly equal, they are shallow equal
   if (objA === objB) {
@@ -236,9 +246,15 @@ export function isShallowEqual(objA: any, objB: any): boolean {
 }`.trim())
   })
 
-  it('makeRequestWithUuid', () => {
-    const result = getFunctionContents(commonFileContents, 'makeRequestWithUuid')
-    expect(result).toBe(`
+  it<Context>('makeRequestWithUuid', (context) => {
+    const functionName = 'makeRequestWithUuid'
+    const extracted = extractFunction(context.commonFileContents, functionName)
+
+    expect(extracted).toBeDefined()
+    expect(extracted).toContain(functionName)
+    expect(extracted).toBe(`
+import axios from 'axios'
+
 export async function makeRequestWithUuid(url: string, data: any): Promise<any> {
   // Generate a unique identifier for this request
   const requestId = uuidv4()
@@ -250,17 +266,29 @@ export async function makeRequestWithUuid(url: string, data: any): Promise<any> 
 }`.trim())
   })
 
-  it('randomCheck', () => {
-    const result = getFunctionContents(commonFileContents, 'randomCheck')
-    expect(result).toBe(`
+  it<Context>('randomCheck', (context) => {
+    const functionName = 'randomCheck'
+    const extracted = extractFunction(context.commonFileContents, functionName)
+
+    expect(extracted).toBeDefined()
+    expect(extracted).toContain(functionName)
+    expect(extracted).toBe(`
 export function randomCheck() {
   return null
 }`.trim())
   })
 
-  it('simpleCacheStore', () => {
-    const result = getFunctionContents(commonFileContents, 'simpleCacheStore')
-    expect(result).toBe(`
+  it<Context>('simpleCacheStore', (context) => {
+    const functionName = 'simpleCacheStore'
+    const extracted = extractFunction(context.commonFileContents, functionName)
+
+    expect(extracted).toBeDefined()
+    expect(extracted).toContain(functionName)
+    expect(extracted).toBe(`
+import { MAX_CACHE_SIZE } from './constants'
+
+const cache = new Map<string, any>()
+
 export function simpleCacheStore(key: string, value?: any): any {
   // If value is provided, set it in the cache
   if (value !== undefined) {
@@ -278,9 +306,20 @@ export function simpleCacheStore(key: string, value?: any): any {
 }`.trim())
   })
 
-  it('calculatePagination', () => {
-    const result = getFunctionContents(commonFileContents, 'calculatePagination')
-    expect(result).toBe(`
+  it<Context>('calculatePagination', (context) => {
+    const functionName = 'calculatePagination'
+    const extracted = extractFunction(context.commonFileContents, functionName)
+
+    expect(extracted).toBeDefined()
+    expect(extracted).toContain(functionName)
+    expect(extracted).toBe(`
+type ReshapedResponse<Shape> = {
+  results: Shape[]
+  total: number
+  page: number
+  totalPages?: number
+}
+
 export function calculatePagination(
   totalItems: number,
   pageSize: number,
@@ -307,241 +346,5 @@ export function calculatePagination(
     totalPages
   } as ReshapedResponse<any>
 }`.trim())
-  })
-})
-
-// describe('getFunctionGlobals', () => {
-//   it('simpleCacheStore', () => {
-//     const functionContents = getFunctionContents(commonFileContents, 'simpleCacheStore')
-//     const result = getFunctionGlobals(functionContents, commonFileContents, 'simpleCacheStore')
-//     expect(result).toBe(`
-// import { MAX_CACHE_SIZE} from './constants'
-// const cache = new Map<string, any>()
-// `.trim())
-//   })
-// })
-
-describe('analyzeFile', () => {
-  it('should properly analyze the common file', () => {
-    const analysis = analyzeFile(commonFileContents)
-    expect(analysis).toBeDefined()
-
-    console.log(analysis.imports)
-  })
-})
-
-describe('getAllImports', () => {
-  it('should work with the common sample file with no side effects', () => {
-    const result = getAllImports(commonFileContents)
-    expect(result).toEqual([
-      'import axios from \'axios\'',
-      'import { MAX_CACHE_SIZE } from \'./constants\'',
-      `import {
-  v4 as uuidv4
-} from 'uuid'`
-    ])
-  })
-
-  it('import statements', () => {
-    const sample = `
-    import foo from "foo"
-    import { Bar } from 'bar';
-    import type { Baz } from "baz";
-    import "./some-side-effect";
-    `
-
-    const result = getAllImports(sample)
-    expect(result).toEqual([
-      'import foo from "foo"',
-      'import { Bar } from \'bar\';',
-      'import type { Baz } from "baz";',
-      'import "./some-side-effect";'
-    ])
-  })
-
-  it('should work with require statements', () => {
-    const sample = `
-    const fs = require("fs");
-    let foo = require('foo');
-    var bar=require("bar");
-    require("dotenv/config");
-    require('source-map-support/register');
-    `.trim()
-
-    const result = getAllImports(sample)
-    expect(result).toEqual([
-      'const fs = require("fs");',
-      'let foo = require(\'foo\');',
-      'var bar=require("bar");',
-      'require("dotenv/config");',
-      'require(\'source-map-support/register\');'
-    ])
-  })
-})
-
-// describe('getAllGlobalVariables', () => {
-//   it('should return all global variables used in the common sample file', () => {
-//     const result = getAllGlobalVariables(commonFileContents)
-//     expect(result).toEqual([
-//       'const DEFAULT_DATE_FORMAT = \'yyyy-MM-dd HH:mm:ss\'',
-//       'const cache = new Map<string, any>()',
-//       `type ReshapedResponse<Shape> = {
-//         results: Shape[]
-//         total: number
-//         page: number
-//         totalPages?: number
-//       }`
-//     ])
-//   })
-// })
-
-// describe('listAllGlobalsUsed', () => {
-//   it('deepClone', () => {
-//     const functionContents = getFunctionContents(commonFileContents, 'deepClone')
-//     const result = listAllGlobalsUsed(functionContents, 'deepClone')
-//     expect(result).toBe([])
-//   })
-
-//   it('debounce', () => {
-//     const functionContents = getFunctionContents(commonFileContents, 'debounce')
-//     const result = listAllGlobalsUsed(functionContents, 'debounce')
-//     expect(result).toBe([])
-//   })
-
-//   it('formatDate', () => {
-//     const functionContents = getFunctionContents(commonFileContents, 'formatDate')
-//     const result = listAllGlobalsUsed(functionContents, 'formatDate')
-//     expect(result).toBe([ 'DEFAULT_DATE_FORMAT' ])
-//   })
-
-//   it('clamp', () => {
-//     const functionContents = getFunctionContents(commonFileContents, 'clamp')
-//     const result = listAllGlobalsUsed(functionContents, 'clamp')
-//     expect(result).toBe([])
-//   })
-
-//   it('retryAsync', () => {
-//     const functionContents = getFunctionContents(commonFileContents, 'retryAsync')
-//     const result = listAllGlobalsUsed(functionContents, 'retryAsync')
-//     expect(result).toBe([ 'retryAsync' ])
-//   })
-
-//   it('isShallowEqual', () => {
-//     const functionContents = getFunctionContents(commonFileContents, 'isShallowEqual')
-//     const result = listAllGlobalsUsed(functionContents, 'isShallowEqual')
-//     expect(result).toBe([])
-//   })
-
-//   it('makeRequestWithUuid', () => {
-//     const functionContents = getFunctionContents(commonFileContents, 'makeRequestWithUuid')
-//     const result = listAllGlobalsUsed(functionContents, 'makeRequestWithUuid')
-//     expect(result).toBe([ 'uuidv4', 'axios' ])
-//   })
-
-//   it('randomCheck', () => {
-//     const functionContents = getFunctionContents(commonFileContents, 'randomCheck')
-//     const result = listAllGlobalsUsed(functionContents, 'randomCheck')
-//     expect(result).toBe([])
-//   })
-
-//   it('calculatePagination', () => {
-//     const functionContents = getFunctionContents(commonFileContents, 'calculatePagination')
-//     const result = listAllGlobalsUsed(functionContents, 'calculatePagination')
-//     expect(result).toBe([ 'clamp' ])
-//   })
-
-//   it('simpleCacheStore', () => {
-//     const functionContents = getFunctionContents(commonFileContents, 'simpleCacheStore')
-//     const result = listAllGlobalsUsed(functionContents, 'simpleCacheStore')
-//     expect(result).toEqual([
-//       'cache',
-//       'MAX_CACHE_SIZE',
-//       'randomCheck'
-//     ])
-//   })
-// })
-
-describe('stripComments', () => {
-  it('simpleCacheStore', () => {
-    const functionContents = getFunctionContents(commonFileContents, 'simpleCacheStore')
-    const result = stripComments(functionContents)
-    expect(result).toBe(`
-export function simpleCacheStore(key: string, value?: any): any {
-
-  if (value !== undefined) {
-    randomCheck()
-
-    if (cache.size >= MAX_CACHE_SIZE) {
-      const firstKey = cache.keys().next().value
-      cache.delete(firstKey)
-    }
-    cache.set(key, value)
-    return null
-  }
-
-  return cache.has(key) ? cache.get(key) : null
-}`.trim())
-  })
-})
-
-describe('extractArgNames', () => {
-  it('deepClone', () => {
-    const functionContents = getFunctionContents(commonFileContents, 'deepClone')
-    const result = extractArgNames(functionContents)
-    expect(result).toEqual([ 'obj' ])
-  })
-
-  it('debounce', () => {
-    const functionContents = getFunctionContents(commonFileContents, 'debounce')
-    const result = extractArgNames(functionContents)
-    expect(result).toEqual([ 'func', 'wait' ])
-  })
-
-  it('formatDate', () => {
-    const functionContents = getFunctionContents(commonFileContents, 'formatDate')
-    const result = extractArgNames(functionContents)
-    expect(result).toEqual([ 'date', 'format' ])
-  })
-
-  it('clamp', () => {
-    const functionContents = getFunctionContents(commonFileContents, 'clamp')
-    const result = extractArgNames(functionContents)
-    expect(result).toEqual([ 'value', 'min', 'max' ])
-  })
-
-  it('retryAsync', () => {
-    const functionContents = getFunctionContents(commonFileContents, 'retryAsync')
-    const result = extractArgNames(functionContents)
-    expect(result).toEqual([ 'fn', 'retries', 'delayMs' ])
-  })
-
-  it('isShallowEqual', () => {
-    const functionContents = getFunctionContents(commonFileContents, 'isShallowEqual')
-    const result = extractArgNames(functionContents)
-    expect(result).toEqual([ 'objA', 'objB' ])
-  })
-
-  it('makeRequestWithUuid', () => {
-    const functionContents = getFunctionContents(commonFileContents, 'makeRequestWithUuid')
-    const result = extractArgNames(functionContents)
-    expect(result).toEqual([ 'url', 'data' ])
-  })
-
-  it('randomCheck', () => {
-    const functionContents = getFunctionContents(commonFileContents, 'randomCheck')
-    const result = extractArgNames(functionContents)
-    expect(result).toEqual([])
-  })
-
-  it('simpleCacheStore', () => {
-    const functionContents = getFunctionContents(commonFileContents, 'simpleCacheStore')
-    const result = extractArgNames(functionContents)
-    expect(result).toEqual([ 'key', 'value' ])
-  })
-
-  it('calculatePagination', () => {
-    const functionContents = getFunctionContents(commonFileContents, 'calculatePagination')
-    const result = extractArgNames(functionContents)
-    expect(result).toEqual([ 'totalItems', 'pageSize', 'currentPage' ])
   })
 })

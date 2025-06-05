@@ -1,42 +1,30 @@
 // Copyright © 2025 Navarrotech
 
 // Core
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 
-// Node
-import os from 'os'
-import fs from 'fs'
+// Typescript
+import type { CompletionsContext } from './vitest.setup'
 
 // Lib
 import { main } from '../src/entry'
-import { ensureFileExists } from '../src/lib/file'
-import { v7 as uuid } from 'uuid'
 import { mockConsole } from './common/mockConsole'
 
-const COMMON_SAMPLE_PATH = ensureFileExists('tests/samples/common.ts', 'Common sample file not found')
-
 type Context = {
-  outputFilePath: string
-}
+
+} & CompletionsContext
 
 describe('Main process', () => {
-  beforeEach<Context>((ctx) => {
-    ctx.outputFilePath = `${os.tmpdir()}/${uuid()}.test.ts`
+  beforeEach<Context>(() => {
     globalThis.logger = mockConsole()
   })
 
-  afterEach<Context>((ctx) => {
-    if (fs.existsSync(ctx.outputFilePath)) {
-      fs.unlinkSync(ctx.outputFilePath)
-    }
-  })
-
-  it<Context>('should ensure the common sample path exists', () => {
-    expect(COMMON_SAMPLE_PATH).toBeDefined()
+  it<Context>('should ensure the common sample path exists', (context) => {
+    expect(context.commonSamplePath).toBeDefined()
   })
 
   it<Context>('should run common:deepClone with no errors', async (context) => {
-    const result = await main(COMMON_SAMPLE_PATH, 'deepClone', context.outputFilePath)
+    const result = await main(context.commonSamplePath, 'deepClone', context.outputFilePath)
 
     expect(result).toBeDefined()
     if (!result) {

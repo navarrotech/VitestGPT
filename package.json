@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vitest watch --reporter=verbose",
     "test": "vitest run --reporter=verbose",
+    "realtest": "tsx ./tests/realtest.ts",
     "lint": "eslint . --ext ts,tsx --max-warnings 0"
   },
   "devDependencies": {
@@ -27,7 +28,6 @@
     "eslint-plugin-react-hooks": "^5.1.0",
     "eslint-plugin-react-refresh": "^0.4.16",
     "tsx": "^4.19.4",
-    "typescript": "^5.8.3",
     "typescript-eslint": "^8.15.0"
   },
   "dependencies": {
@@ -35,7 +35,9 @@
     "dotenv": "^16.5.0",
     "openai": "^5.1.0",
     "reserved-words": "^0.1.2",
+    "squirrelly": "^9.1.0",
     "ts-morph": "^26.0.0",
+    "typescript": "^5.8.3",
     "uuid": "^11.1.0",
     "vitest": "^3.2.1",
     "winston": "^3.17.0",

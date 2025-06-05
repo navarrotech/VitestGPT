@@ -10,6 +10,12 @@ export class FinishStage extends PipelineStage {
   }
 
   public async process(input: PipelineObject): Promise<PipelineObject> {
+    logger.info(
+      JSON.stringify({
+        message: 'Pipeline execution completed successfully',
+        input
+      }, null, 2)
+    )
     return input
   }
 }

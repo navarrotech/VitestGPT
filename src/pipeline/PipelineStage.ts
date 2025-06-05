@@ -42,6 +42,7 @@ export class PipelineStage {
     catch (error: unknown) {
       input.continue = false
       input.log(`Error in stage "${this.name}":`, error)
+      logger.error(error)
     }
     input = await this.afterRun(input)
 
