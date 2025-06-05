@@ -7,7 +7,7 @@ import { AnalysisStage } from './1_analysis'
 import { TestplanStage } from './2_testplan'
 import { WriteStage } from './3_write'
 import { TestStage } from './4_test'
-import { ImproveStage } from './5_improve'
+import { CritiqueStage } from './5_critique'
 import { FinishStage } from './6_finish'
 
 const setupStage = new SetupStage()
@@ -15,7 +15,7 @@ const analysisStage = new AnalysisStage()
 const testplanStage = new TestplanStage()
 const writeStage = new WriteStage()
 const testStage = new TestStage()
-const improveStage = new ImproveStage()
+const improveStage = new CritiqueStage()
 const finishStage = new FinishStage()
 
 setupStage.setNext(analysisStage)

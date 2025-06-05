@@ -3,9 +3,9 @@
 import { PipelineStage } from './PipelineStage'
 import type { PipelineObject } from '../lib/PipelineObject'
 
-export class ImproveStage extends PipelineStage {
+export class CritiqueStage extends PipelineStage {
   constructor() {
-    super('Improve')
+    super('Critique')
     this.process = this.process.bind(this)
   }
 

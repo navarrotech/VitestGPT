@@ -3,8 +3,10 @@
 import { PipelineStage } from './PipelineStage'
 import type { PipelineObject } from '../lib/PipelineObject'
 
+// Utility
+import { removeBackticks } from '../lib/llm'
+import { touch } from '../lib/file'
 import { getPrompt } from '../lib/prompts'
-import path from 'path'
 
 export class WriteStage extends PipelineStage {
   constructor() {
@@ -13,11 +15,12 @@ export class WriteStage extends PipelineStage {
   }
 
   public async process(input: PipelineObject): Promise<PipelineObject> {
-    const inputFileName = path.basename(input.targetInputFile)
+    // const importStatement = input.usesDefaultExport
+    //   ? `import ${input.targetInputFunction} from '${input.relativeImportToTarget}'`
+    //   : `import { ${input.targetInputFunction} } from '${input.relativeImportToTarget}'`
 
-    const importStatement = input.usesDefaultExport
-      ? `import ${input.targetInputFunction} from './${inputFileName}'`
-      : `import { ${input.targetInputFunction} } from './${inputFileName}'`
+    // TODO: Temporarily hardcoded so I can move onto the next stage :)
+    const importStatement = `import { ${input.targetInputFunction} } from './common.ts'`
 
     const prompt = getPrompt('writeUnitTests', {
       function: input.isolatedFunctionContents,
@@ -34,13 +37,9 @@ export class WriteStage extends PipelineStage {
       return input
     }
 
-    input.vitestFileContents = result
+    input.vitestFileContents = removeBackticks(result)
 
+    touch(input.targetOutputFile, input.vitestFileContents)
     return input
   }
 }
-
-// npx vitest -t "adds two numbers"
-// vitest --run --testNamePattern="adds two numbers"
-// npx vitest -t "/adds.*numbers/"
-// npx vitest path/to/my-utils.test.ts

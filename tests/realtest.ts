@@ -44,6 +44,8 @@ async function runRealTest() {
     OUTPUT_FINAL_RESULT,
     JSON.stringify(result, null, 2)
   )
+
+  console.log(`REALTEST FINISHED - You can access the temporary directory created at:\n${tmpDir}`)
 }
 
 runRealTest().catch(console.error)

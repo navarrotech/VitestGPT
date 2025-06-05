@@ -79,3 +79,66 @@ export function findPackageJson(fromPath: string): string {
   // If no package.json was found in any parent, return an empty string
   return ''
 }
+
+/**
+ * Ensures that all parent directories of the given file path exist,
+ * then writes the provided contents to the file.
+ *
+ * @param {string} filePath - Path to the file to write
+ * @param {string | Buffer} contents - Data to write to the file (string or Buffer)
+ */
+export function touch(filePath: string, contents: string | Buffer): void {
+  const dir: string = path.dirname(filePath)
+  fs.mkdirSync(dir, { recursive: true })
+  fs.writeFileSync(filePath, contents)
+}
+
+/**
+ * Generates a relative import path from one file to another
+ *
+ * @param {string} pathToImport - Absolute path of the file you want to import (including extension)
+ * @param {string} sourcePath - Absolute path of the file where the import will live (including extension)
+ * @return {string} A relative path suitable for a TypeScript import, with forward slashes
+ */
+export function makeRelativeImportPath(pathToImport: string, sourcePath: string): string {
+  // 1. Normalize both inputs so e.g. "E:\Dir\..\Foo" → "E:\Foo"
+  const normalizedImport = path.normalize(pathToImport)
+  const normalizedSource = path.normalize(sourcePath)
+
+  // 2. If both are on Windows with a drive letter (e.g. "E:\"), strip that off,
+  //    so path.relative can compute a “pure” relative path. If there’s no drive,
+  //    stripDrive just returns the original string.
+  function stripDrive(p: string): string {
+    // path.parse(p).root === "E:\" on Windows when p = "E:\Whatever\…"
+    const parsed = path.parse(p)
+    if (/^[A-Za-z]:[\\\/]$/.test(parsed.root)) {
+      // Remove the leading "E:\" (i.e. parsed.root.length characters)
+      return p.slice(parsed.root.length)
+    }
+    return p
+  }
+
+  const importNoDrive = stripDrive(normalizedImport)
+  const sourceNoDrive = stripDrive(normalizedSource)
+
+  // 3. Grab the directory of the “source file” (without drive)
+  const fromDirNoDrive = path.dirname(sourceNoDrive)
+
+  // 4. Compute the raw relative path (still using backslashes on Windows)
+  let relativePath = path.relative(fromDirNoDrive, importNoDrive)
+
+  // 5. Convert backslashes → forward slashes
+  relativePath = relativePath.replace(/\\/g, '/')
+
+  // 6. If path.relative somehow returned a leading "./" (rare), strip it
+  //    so we don’t end up with "././foo.ts"
+  relativePath = relativePath.replace(/^\.\//, '')
+
+  // 7. If it still doesn’t start with "." (i.e. it's in the same folder
+  //    or a sub‐folder), prefix "./" to make it a valid import
+  if (!relativePath.startsWith('.')) {
+    relativePath = `./${relativePath}`
+  }
+
+  return relativePath
+}

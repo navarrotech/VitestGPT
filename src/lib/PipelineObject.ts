@@ -22,6 +22,7 @@ export class PipelineObject {
   public targetInputFunction: string
   public targetOutputFile: string
   public packageJsonFile: string
+  public relativeImportToTarget: string
 
   // File contents
   public packageJsonContents: string

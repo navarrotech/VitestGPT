@@ -1,3 +1,12 @@
 - React.js support
 - Require module support
 - Instead of creating a vitest from scratch, instead modify + upgrade it
+- Additional context arg, where you can pass a comma separated list of other files to include to the prompts
+- Additional information arg, where you can help to tell it the purpose of a given function
+- Interactivity, where the GPT can make suggestions to the source code (if it finds a bug)
+  - The user will see a git diff, and can approve/deny each change in a diff editor
+  - Once all diffs are resolved, then the GPT can retry the unit tests
+- Add support for passing a vitest.config.ts into this
+  - Maybe even consider our own vitestgpt.config.ts or something lol
+  - Add support for auto discovering vitest.config.ts
+- Make output path optional, where it will default to the same directory but with a functionname.test.ts instead

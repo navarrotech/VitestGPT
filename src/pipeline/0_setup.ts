@@ -4,7 +4,8 @@ import { PipelineStage } from './PipelineStage'
 import type { PipelineObject } from '../lib/PipelineObject'
 
 // Utility
-import { findPackageJson } from '../lib/file'
+import { getBestVitestPath } from '../lib/vitest'
+import { findPackageJson, makeRelativeImportPath } from '../lib/file'
 import { safeParseJson } from '../common/json'
 import fs from 'fs'
 
@@ -15,6 +16,8 @@ export class SetupStage extends PipelineStage {
   }
 
   public async process(input: PipelineObject): Promise<PipelineObject> {
+    await getBestVitestPath()
+
     // Read contents of the target input file
     input.targetRawInputFileContents = fs.readFileSync(input.targetInputFile, 'utf-8')
     fs.writeFileSync(input.targetOutputFile, '', { flag: 'w', encoding: 'utf-8' })
@@ -39,6 +42,11 @@ export class SetupStage extends PipelineStage {
     else {
       input.lang = 'javascript'
     }
+
+    input.relativeImportToTarget = makeRelativeImportPath(
+      input.targetInputFile,
+      input.targetOutputFile
+    )
 
     return input
   }
